@@ -1,0 +1,205 @@
+---
+title: "clustering"
+author: "AGBOHOUTO OMRAAM OLIVIER"
+date: "13/03/2020"
+output: html_document
+---
+
+```{r echo=FALSE}
+library(MASS)
+library(klaR)
+library(class)
+library(factoextra)
+library(labelled)
+library(Hmisc)
+library(FactoMineR)
+library(DescTools)
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 12,fig.height = 4)
+```
+We want to test the classify the different states of the USA using the demographic evolution within these states. The data are contained in the file states.RData.
+
+## Data Loading
+
+```{r}
+load("D:/STDV 1/ANALYSEDEDONNEES/PROJET CLUSTERING/states.RData")
+data<-states.data
+```
+
+## Data exploration, vizualisation and preparation
+It is important for each dataset to always analyze the different variables by doing tables vizualisations. In order to correct eventual inconsistencies, create new relevant variables from old variables and other data preparation tasks
+```{r}
+head(data,n=10)
+summary(data)
+```
+The variable names are truncated with special characters. They can be modified if necessary to make them more readable and manipulable.
+```{r}
+names(data)
+names(data)<-c('Pop_Total','Immigration_dom_net','Am_migration_avec_etranger',
+               'Immigration_inter_net','Taux_naissance','Taux_mortalite','Pop_moins_65','Pop_plus_65')
+```
+
+```{r}
+ggplot(data, aes(x=Pop_moins_65)) + 
+  geom_histogram(aes(y = ..density..),
+                 colour = 1, fill = "white",bins=10) +
+  geom_density(lwd = 1, colour = 4,
+               fill = 4, alpha = 0.25)+ggtitle('Histogram Pop moins de 65 ans')
+
+ggplot(data, aes(x=Pop_plus_65)) + 
+  geom_histogram(aes(y = ..density..),
+                 colour = 1, fill = "white",bins=10) +
+  geom_density(lwd = 1, colour = 4,
+               fill = 4, alpha = 0.25)+ggtitle('Histogram Pop plus de 65 ans')
+
+ggplot(data, aes(x=Taux_naissance)) + 
+  geom_histogram(aes(y = ..density..),
+                 colour = 1, fill = "white",bins=20) +
+  geom_density(lwd = 1, colour = 4,
+               fill = 4, alpha = 0.25)+ggtitle('Histogram Taux de naissance')
+
+ggplot(data, aes(x=Taux_mortalite)) + 
+  geom_histogram(aes(y = ..density..),
+                 colour = 1, fill = "white",bins=20) +
+  geom_density(lwd = 1, colour = 4,
+               fill = 4, alpha = 0.25)+ggtitle('Histogram Taux de mortalite')
+
+ggplot(data, aes(x=Immigration_dom_net)) + 
+  geom_histogram(aes(y = ..density..),
+                 colour = 1, fill = "white",bins=20) +
+  geom_density(lwd = 1, colour = 4,
+               fill = 4, alpha = 0.25)+ggtitle('Histogram Immigration domicile nette')
+
+ggplot(data, aes(x=Immigration_inter_net)) + 
+  geom_histogram(aes(y = ..density..),
+                 colour = 1, fill = "white",bins=20) +
+  geom_density(lwd = 1, colour = 4,
+               fill = 4, alpha = 0.25)+ggtitle('Histogram Immigration Internationale nette')
+```
+
+Since we have only quantitative variables, we can study the correlation between them. We prefer to use a Spearman test which is more robust than the Pearson test.
+
+```{r}
+statecor <- cor(data,method="spearman")#Spearman test robuste
+statecor
+```
+```{r}
+library(corrplot)
+corrplot(as.matrix(statecor), method='color', addCoef.col = "black", type="lower", order="hclust", tl.col="black", tl.srt=45,title='Matrice de corrélation')
+```
+Results: Our data were well collected and do not suffer from any major problems. However, we will not need the population variable in our clustering as it is not very useful for this problem. We will just use the socio-demographic characteristics of the states. Also, we can do without one of the variables Pop_minus_65 and Pop_plus_65 because they represent exactly the same thing but in opposite ways. This is evidenced by the correlation matrix. We also choose to normalize our data. This is useful because we have data in different units that don't all fit together (we're not going to mix towels and dish towels :) )
+
+```{r}
+data<-data[2:8]
+datascale=scale(data)
+```
+
+Nous pouvons à présent essayer de résoudre le problème de clustering de ces données en utilisant les algorithmes appropriés comme par exemple l'algorithme des $\texttt{k-means}$, des $\texttt{k-medoïd}$ ou même les méthodes ascendantes ou descendantes hiérarchiques $\texttt{HAC}$ ou $\texttt{HDC}$;
+
+## Clustering using k-means
+
+```{r echo=FALSE}
+library(cluster)
+library(fpc)
+```
+We use here the $\texttt{kmeansruns}$ command of the
+fpc library which automatically calculates the number of clusters using the elbow rule or the silhouette method. 
+See [K-means documentation](https://www.rdocumentation.org/packages/bios2mds/versions/1.2.3/topics/kmeans.run) for more details.
+
+```{r}
+datascale.kmean=kmeansruns(datascale, krange=2:12)
+datascale.kmean$cluster
+datascale.kmean$bestk
+```
+
+
+Results: Clustering using  k-means method allows us to retain 2 optimal classes of sizes 36 (cluster 1) and 15 (cluster 2).
+The result below shows us the states contained in the first and second cluster.
+```{r}
+statecluster1=as.data.frame(which(datascale.kmean$cluster==1))
+statecluster2=as.data.frame(which(datascale.kmean$cluster==2))
+```
+
+This method provides two groups of states: 
+
+- Cluster one states are characterized by low population (average 4853870.6), negative domestic immigration(-1.4), high mortality rates (average 9.4) versus low birth rates (average 7.2), and a large population over 65 (average 132.6). 
+
+- The second cluster states have larger populations (average 7337169.6), positive net domestic immigration (4.2), low mortality rates (average 7.2) versus high birth rates (average 15.4), and fewer people over 65 (average 107.1). This is understandable because the states in the second cluster contain the largest populations of foreign origin.
+
+
+## Clustering using k-medoid
+We use here the pam command (Partitioning aroung medoid) which allows to do the clustering using the $\texttt{k-medoids}$ method. Contrary to the kmeansruns command which automatically provides the optimal number of clusters, we define ourselves the number of clusters we want (slight inconvenient :) ). More information here [K-medoids documentation](https://www.rdocumentation.org/packages/cluster/versions/2.1.2/topics/pam)
+
+We choose here 2 clusters: (reasoned choice of the result of k-means)
+```{r}
+datascale.kmedo=pam(datascale, k=2, metric="euclidean", stand=FALSE)
+```
+Although, to determine the optimal number of clusters, we’ll use the R function $\texttt{fviz_nbclust}$ which provides a convenient solution to estimate the optimal number of clusters using differents methods. Plus d'informations sur cette méthode [ici](https://www.rdocumentation.org/packages/factoextra/versions/1.0.7/topics/fviz_nbclust)
+```{r}
+library(cluster)
+library(factoextra)
+```
+
+```{r}
+fviz_nbclust(datascale, pam, method = "silhouette", k.max=12) +
+geom_vline(xintercept = 2, linetype = 2)
+```
+By using the silhouette rule we can well retain 2 optimal classes because it allows to maximize silhouette coefficient.
+
+```{r}
+statecluster11=as.data.frame(which(datascale.kmedo$clustering==1))
+statecluster22=as.data.frame(which(datascale.kmedo$clustering==2))
+```
+
+```{r}
+table(datascale.kmedo$clustering,datascale.km$cluster)
+which(datascale.kmedo$clustering==2 & datascale.km$cluster==1)
+```
+Clustering using  k-medoids method allows us to retain 2 optimal classes of sizes 30 (cluster 1) and 21 (cluster 2). Slightly different results. We can make a contingency table to visualize the differences in results. There are six states present in cluster 1 of k-means method that are not present in the states of cluster 1 of the k-medoids method. These six states shown below were assigned to cluster 2 by k-medoids method.
+
+## Clustering using Hierarchical Ascending Classification (CAH)
+For more information on the commands used to perform the HAC, see the links below: 
+
+[Méthode CAH](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/hclust)
+
+[Dendogramme](https://www.rdocumentation.org/packages/ggdendro/versions/0.1.23/topics/ggdendrogram)
+
+
+```{r}
+library(ggdendro)
+library(ggplot2)
+library(dendextend)
+```
+
+```{r}
+datascale.dist = dist(datascale)
+datascale.ag = hclust(datascale.dist,method="complete")
+```
+
+```{r}
+datascale.dist = dist(datascale,method="euclidean", diag=FALSE) #Calcul de la matrice de distance
+datascale.ag = hclust(datascale.dist,method="ward.D") #HAC avec comme méthode d'agglomération entre cluster la méthode ward.d
+ggdendrogram(datascale.ag, labels = TRUE)+ggtitle('Dendogramme')
+```
+
+Once dendogram is represented, we can ask ourselves which number of optimal cluster to choose. We represent the jumps in inertia for each number of cluster. The optimal number of clusters is the one where there is a strong jump in inertia. 
+
+```{r}
+inertie <- sort(datascale.ag$height, decreasing = TRUE)
+plot(inertie[1:50], type = "s", xlab = "Nombre de classes", ylab = "Inertie")
+xtick<-seq(0, 50, by=2)
+axis(side=1, at=xtick)
+```
+Notice that 2 is the number of cluster where we have the maximum jump of variance. We can therefore retain k=2 classes as the optimal number of clusters. 
+Let's represent the clusters on the dendogram by cutting the tree.
+
+```{r}
+ggplot(color_branches(datascale.ag, k = 5), labels = TRUE) +ggtitle('Dendogramme')
+fviz_dend(datascale.ag, k = 2, show_labels = TRUE, rect = TRUE)
+```
+We note a similarity between the clusters proposed by the HAC method and the two previous methods. In fact, the states grouped in the blue cluster above are very similar to those grouped in clusters 2 using the two previous methods.
+
+Conclusion: In a clustering problem, the goal is to form groups of individuals that are similar in terms of their characteristics represented by the variables. Several methods can be used. We have proposed above three methods which are the k-means method, the k-medoids method and the hierarchical ascending classification (HAC). There are other methods such as the hierarchical descending classification (HDC).
