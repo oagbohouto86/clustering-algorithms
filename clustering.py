@@ -7,7 +7,6 @@
 import os, pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 import scipy.stats
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import scale
@@ -57,12 +56,12 @@ data.describe()
 # In[33]:
 
 
-fig, axes = plt.subplots(2,4,figsize=(10,5)) 
+fig, axes = plt.subplots(2,4,figsize=(10,5))
 columns = ['Pop_Total','Immigration_dom_net','Am_migration_avec_etranger',
                'Immigration_inter_net','Taux_naissance','Taux_mortalite','Pop_moins_65','Pop_plus_65']
 for i,col in enumerate(list(columns)):
     plot = sns.histplot(data=data[col], kde=True, stat='density', ax=axes.flatten()[i])
-plt.tight_layout() 
+plt.tight_layout()
 plt.show()
 
 
@@ -149,7 +148,7 @@ datascale_kmean_label[datascale_kmean_label['label']==0]
 # Ressources:
 # k-medoids using python:
 # https://scikit-learn-extra.readthedocs.io/en/stable/generated/sklearn_extra.cluster.KMedoids.html
-# 
+#
 # Silhouette and Elbow method for number of cluster optimal:
 # https://www.scikit-yb.org/en/latest/api/cluster/elbow.html
 
@@ -173,7 +172,7 @@ Counter(datascale_kmedo.labels_)
 # #### Clustering using Hierarchical Ascending Classification (CAH)
 
 # Ressource: Hierarchical Ascending Classification using python
-# 
+#
 # https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html#sklearn.cluster.AgglomerativeClustering.fit_predict
 
 # In[14]:
@@ -207,7 +206,7 @@ plt.show()
 # In[41]:
 
 
-model_cah=AgglomerativeClustering(n_clusters=2, affinity='euclidean',compute_full_tree='auto', linkage='ward', 
+model_cah=AgglomerativeClustering(n_clusters=2, affinity='euclidean',compute_full_tree='auto', linkage='ward',
                                      compute_distances=False)
 
 
