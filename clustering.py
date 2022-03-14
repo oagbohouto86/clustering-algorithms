@@ -13,7 +13,6 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import scale
 from sklearn_extra.cluster import KMedoids
 from collections import Counter
-import yellowbrick
 
 
 # In[3]:
