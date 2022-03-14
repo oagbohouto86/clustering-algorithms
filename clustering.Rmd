@@ -2,6 +2,7 @@
 title: "clustering"
 author: "AGBOHOUTO OMRAAM OLIVIER"
 date: "13/03/2020"
+output: html_document
 ---
 
 ```{r echo=FALSE}
@@ -153,7 +154,10 @@ statecluster11=as.data.frame(which(datascale.kmedo$clustering==1))
 statecluster22=as.data.frame(which(datascale.kmedo$clustering==2))
 ```
 
-
+```{r}
+table(datascale.kmedo$clustering,datascale.km$cluster)
+which(datascale.kmedo$clustering==2 & datascale.km$cluster==1)
+```
 Clustering using  k-medoids method allows us to retain 2 optimal classes of sizes 30 (cluster 1) and 21 (cluster 2). Slightly different results. We can make a contingency table to visualize the differences in results. There are six states present in cluster 1 of k-means method that are not present in the states of cluster 1 of the k-medoids method. These six states shown below were assigned to cluster 2 by k-medoids method.
 
 ## Clustering using Hierarchical Ascending Classification (CAH)
