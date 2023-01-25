@@ -1,4 +1,4 @@
-# clustering
+# Brief overview
 
 A most common problem that we face in big data is segmentation data into homogeneous group based on their characteristic. For example, large distribution group have to  segment theirs customers/audiences into groups of similar characteristics (needs, location, interests or demographics) where target and personalization, under it, is an immense business. Or in social network analysis, we have to examine qualitative and quantitative social structures, group of populations, nodes and connections etc... This interesting work is known as Clustering.
 
@@ -8,7 +8,7 @@ There are many algorithm of clustering such as k-means, k-medoids, Ascendant/Des
 
 Here I will present three popular clustering algorithms: k-means, k-medoids, Ascendant/Descendant Hierarchical Classification to classify some data under R and Python Software.
 
-# requirements
+# Requirements
 Python : numpy, scipy, sklearn and other librairies present in the script
 
 r 4.1.3
